@@ -1,0 +1,1 @@
+Note in the notebooks in this file how the python scikit-learn library is used to deploy a model.  A pipeline is created with transformers and an estimator (algorithm) which is then fitted to create the trained model.  The trained model then gets deployed to the WML instance.

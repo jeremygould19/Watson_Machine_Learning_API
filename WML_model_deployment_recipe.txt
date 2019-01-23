@@ -1,0 +1,57 @@
+Steps to deploy a model to WML
+
+1) Either drag and drop or create an SPSS model in Modeler Flows in Watson Studio
+
+2) Right click on the terminal node of the stream that's intended to be used for scoring
+and select 'save as scoring branch'
+
+3) Give the model a name and select the appropriate Watson Machine Learning service you'd like
+to deploy it too; If you don't have a Watson Machine Learning instance, you can create one in this step
+
+4) Navigate back out to your project in Watson Studio and scroll down to the Models tab
+
+5) You should see the model you just created there, click into it
+
+6) Click Deployments and then on the right side of the screen click '+ Add Deployments' and give the
+deployment a name
+
+7) A deployment for the model should get added to the list and the Status column should eventually read
+Deployment success
+
+8) In Deployments, click in the model that was just added to the list
+
+9) Take note of the the Deployment ID, Model ID, and Model URL because you may need these later to build the URL
+to call the model
+
+10) the final thing you will need to do is get the authentication token for the model; click the implementation tab to get
+instruction for how to do this
+
+the instructions from the tab are below for making the cURL request (the username, password, and URL will come from the
+separate Watson Machine Learning Service in Bluemix; you will need to navigate there and create the credentials under
+service credentials):
+
+# retrieve your $WML_SERVICE_CREDENTIALS_USERNAME, $WML_SERVICE_CREDENTIALS_PASSWORD, and $WML_SERVICE_CREDENTIALS_URL from the
+# Service credentials associated with your IBM Cloud Watson Machine Learning Service instance.
+
+curl --basic --user $WML_SERVICE_CREDENTIALS_USERNAME:$WML_SERVICE_CREDENTIALS_PASSWORD $WML_SERVICE_CREDENTIALS_URL/v3/identity/token
+
+11) You will then need to add the authentication token you get from the curl request to the header of an API call to
+the WML model; below is a sample of what can be added to a node-red function node before calling the API
+
+msg.headers =
+    {"Content-Type": "application/json",
+    "Accept":"application/json",
+    "Authorization":"Bearer <token>"};
+
+12) Here is a link to more info about using the WML API:
+https://watson-ml-api.mybluemix.net/#/
+
+13) Here's a sample flow that lists all the deployments for a particular model.  You will just need to update the token
+in the 'building WML api call' function and update the url with the right details in the 'Machine Learning' http
+request node. NOTE: we are using an HTTP request node here, not a Watson Machine Learning or Predictive Analytics node.
+I just gave the node the label of Machine learning in the stream:
+
+[{"id":"5ad15759.5b6208","type":"http request","z":"4a439c8e.07c844","name":"Machine Learning","method":"GET","ret":"txt","url":"https://ibm-watson-ml.mybluemix.net/v3/wml_instances/{instance_id}/published_models/{published_model_id}/deployments","tls":"","x":490,"y":340,"wires":[["bce4db18.445928"]]},{"id":"41f5f2d4.a300dc","type":"function","z":"4a439c8e.07c844","name":"building WML api call","func":"msg.headers = \n    {\"Content-Type\": \"application/json\",\n    \"Accept\":\"application/json\",\n    \"Authorization\":\"Bearer <token>\"};\n    \nreturn msg;","outputs":1,"noerr":0,"x":260,"y":340,"wires":[["5ad15759.5b6208"]]},{"id":"325e166e.79a3ca","type":"inject","z":"4a439c8e.07c844","name":"","topic":"","payload":"","payloadType":"date","repeat":"","crontab":"","once":false,"onceDelay":0.1,"x":80,"y":340,"wires":[["41f5f2d4.a300dc"]]},{"id":"bce4db18.445928","type":"debug","z":"4a439c8e.07c844","name":"","active":true,"tosidebar":true,"console":false,"tostatus":false,"complete":"false","x":690,"y":340,"wires":[]}]
+
+14) IBM CTPs have access to standard and professional WML instances as part of our trial versions for IMB Cloud accounts; in the event you exceed your limit for requests and scores for the WML instances you have deployed, check that you have upgraded
+your WML instance to standard or professional
